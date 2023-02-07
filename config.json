@@ -1,0 +1,8 @@
+{
+    "picBed": "nextcloud",
+    "uploadUrl": "https://yourdomain.com:443/remote.php/dav/files",
+    "downloadUrl": "https://yourdomain.com:443/apps/sharingpath",
+    "path": "/public/folder/",
+    "user": "",
+    "passwd": ""
+}

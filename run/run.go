@@ -147,9 +147,13 @@ func (h *Http) upload(args *string) *string {
 		fmt.Printf("删除缓存图片失败，error：%v", err)
 	}
 	resq.upName = h.UploadUrl + h.fileName
-	err = upload.NextcloudUploadFile(&resq.upName, file, &h.Auth)
-	if err != nil {
-		resq.fmtUrl = h.DownloadUrl + h.fileName + "\n"
+	if conf.PicBed == "nextcloud" {
+		err = upload.NextcloudUploadFile(&resq.upName, file, &h.Auth)
+		if err != nil {
+			resq.fmtUrl = h.DownloadUrl + h.fileName + "\n"
+		}
+	} else if conf.PicBed == "aliyunOss" {
+		resq.fmtUrl = upload.AliyunOssUploadFile(&conf.Bucket, &conf.User, &conf.Passwd, &conf.BucketName, &h.fileName, file)
 	}
 	return &resq.fmtUrl
 }

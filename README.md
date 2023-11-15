@@ -14,7 +14,7 @@ nextcloud使用__File sharing__插件实现直链下载，使用开放api接口�
     "downloadUrl": "http[s]://[host]/apps/sharingpath",     //nextcloud通过File sharing插件产生的下载地址
     "path": "",     //在File sharing插件中设置的存储路径
     "user": "",     //nextcloud的账号
-    "passwd": "",     //nextcloud的密码
+    "passwd": ""     //nextcloud的密码
 }
 ```
 
@@ -25,6 +25,6 @@ nextcloud使用__File sharing__插件实现直链下载，使用开放api接口�
     "bucket": "oss-cn-hangzhou.aliyuncs.com",     //阿里云OSS endpoint
     "bucketName": "",     //阿里云OSS bucket名称
     "accessKeyId": "",     //阿里云accessKeyId
-    "accessKeySecret": "",     //阿里云accessKeySecret
+    "accessKeySecret": ""     //阿里云accessKeySecret
 }
 ```

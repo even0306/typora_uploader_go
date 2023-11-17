@@ -77,7 +77,7 @@ func (b *Base64) upload(args *string) *string {
 
 	b.fileName = utils.CreateUUID() + "." + resq.filetype
 	resq.upName = b.UploadUrl + b.fileName
-	err = upload.NextcloudUploadFile(&resq.upName, &file, &b.Auth)
+	err = upload.NextcloudUploadFile(resq.upName, &file, &b.Auth)
 	if err != nil {
 		resq.fmtUrl = b.DownloadUrl + b.fileName + "\n"
 	}
@@ -107,12 +107,12 @@ func (l *Local) upload(args *string) *string {
 	l.fileName = utils.CreateUUID() + "." + resq.filetype
 	resq.upName = l.UploadUrl + l.fileName
 	if conf.PicBed == "nextcloud" {
-		err = upload.NextcloudUploadFile(&resq.upName, file, &l.Auth)
+		err = upload.NextcloudUploadFile(resq.upName, file, &l.Auth)
 		if err != nil {
 			resq.fmtUrl = l.DownloadUrl + l.fileName + "\n"
 		}
 	} else if conf.PicBed == "aliyunOss" {
-		resq.fmtUrl = upload.AliyunOssUploadFile(&conf.Bucket, &conf.User, &conf.Passwd, &conf.BucketName, &l.fileName, file)
+		resq.fmtUrl = upload.AliyunOssUploadFile(&conf.Bucket, &conf.User, &conf.Passwd, &conf.BucketName, l.fileName, file)
 	}
 	return &resq.fmtUrl
 }
@@ -124,10 +124,11 @@ func (h *Http) upload(args *string) *string {
 	h.UploadUrl = conf.Bucket + "/" + user + "/" + conf.Path + "/"
 	h.DownloadUrl = conf.Domain + "/" + user + "/" + conf.Path + "/"
 	h.Auth = map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(user+":"+passwd))}
+	uid := utils.CreateUUID()
 
-	tmp := getexecpath.GetLocalPath() + "/tmp"
+	tmp := getexecpath.GetLocalPath() + "/" + uid
 	h.filePath = *args
-	utils.DownloadFile(&h.filePath, &tmp)
+	utils.DownloadFile(h.filePath, tmp)
 
 	file, err := utils.ReadFile(&tmp)
 	if err != nil {
@@ -140,16 +141,19 @@ func (h *Http) upload(args *string) *string {
 		logging.Printf("文件格式不支持")
 		os.Exit(-1)
 	}
+	h.fileName = uid + "." + resq.filetype
 
-	h.fileName = utils.CreateUUID() + "." + resq.filetype
 	err = os.Remove(tmp)
 	if err != nil {
 		fmt.Printf("删除缓存图片失败，error：%v", err)
 	}
-	resq.upName = h.UploadUrl + h.fileName
-	err = upload.NextcloudUploadFile(&resq.upName, file, &h.Auth)
-	if err != nil {
-		resq.fmtUrl = h.DownloadUrl + h.fileName + "\n"
+	if conf.PicBed == "nextcloud" {
+		err = upload.NextcloudUploadFile(h.UploadUrl+h.fileName, file, &h.Auth)
+		if err != nil {
+			resq.fmtUrl = h.DownloadUrl + h.fileName + "\n"
+		}
+	} else if conf.PicBed == "aliyunOss" {
+		resq.fmtUrl = upload.AliyunOssUploadFile(&conf.Bucket, &conf.User, &conf.Passwd, &conf.BucketName, h.fileName, file)
 	}
 	return &resq.fmtUrl
 }

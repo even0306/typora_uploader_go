@@ -3,12 +3,14 @@ package utils
 import (
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
 	"typora_uploader_go/logs"
 
 	"github.com/google/uuid"
+	"golang.org/x/sys/windows/registry"
 )
 
 var logging = logs.LogFile()
@@ -55,20 +57,42 @@ func ReadFile(path *string) (b *[]byte, e error) {
 }
 
 // 下载文件
-func DownloadFile(imgUrl *string, path *string) {
-	timeout := time.Duration(30 * time.Second)
-	client := http.Client{
-		Timeout: timeout,
+func DownloadFile(imgUrl string, path string) {
+	key, err := registry.OpenKey(
+		registry.CURRENT_USER,
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`,
+		registry.QUERY_VALUE)
+	if err != nil {
+		logging.Fatal(err)
+	}
+	val, _, err := key.GetStringValue("ProxyServer")
+	if err != nil {
+		logging.Fatal(err)
+	}
+	uri, err := url.Parse("http://" + val)
+	if err != nil {
+		logging.Fatal(err)
 	}
 
-	resp, err := client.Get(*imgUrl)
+	client := http.Client{
+		Timeout: time.Second * 30,
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(uri),
+		},
+	}
+
+	resp, err := client.Get(imgUrl)
 	if err != nil {
 		logging.Print(err)
 	}
-	defer resp.Body.Close()
+	if resp != nil {
+		defer resp.Body.Close()
+	} else {
+		logging.Panicf("cannot get '%v'", imgUrl)
+	}
 
 	// 创建一个文件用于保存
-	out, err := os.Create(*path)
+	out, err := os.Create(path)
 	if err != nil {
 		panic(err)
 	}
@@ -79,6 +103,10 @@ func DownloadFile(imgUrl *string, path *string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func newFunction(resp *http.Response) {
+	defer resp.Body.Close()
 }
 
 // 创建UUID作为文件名

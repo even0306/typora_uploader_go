@@ -30,9 +30,9 @@ func timeoutDialer(cTimeout time.Duration, rwTimeout time.Duration) func(net, ad
 var logging = logs.LogFile()
 
 // 上传接口，传url，文件二进制，参数头
-func NextcloudUploadFile(rURL *string, b *[]byte, header *map[string]string) error {
+func NextcloudUploadFile(rURL string, b *[]byte, header *map[string]string) error {
 
-	req, err := http.NewRequest("PUT", *rURL, bytes.NewBuffer(*b))
+	req, err := http.NewRequest("PUT", rURL, bytes.NewBuffer(*b))
 	if err != nil {
 		logging.Printf("http newrequest error %s", err)
 		return err
@@ -66,7 +66,7 @@ func NextcloudUploadFile(rURL *string, b *[]byte, header *map[string]string) err
 				return err
 			}
 			logging.Printf("\n【请求地址】： %s \n【请求参数】： %s \n【请求头】： %s \n【返回】 : %s \n",
-				*rURL, "上传文件", *header, string(respData))
+				rURL, "上传文件", *header, string(respData))
 			fmt.Println(string(respData))
 			return nil
 		} else if resp.StatusCode != http.StatusOK {
@@ -77,7 +77,7 @@ func NextcloudUploadFile(rURL *string, b *[]byte, header *map[string]string) err
 			}
 
 			logging.Printf("\n【请求地址】： %s \n【请求参数】： %s \n【请求头】： %s \n【返回】 : %s \n",
-				*rURL, "上传文件", *header, string(respData))
+				rURL, "上传文件", *header, string(respData))
 			return errors.New("上传文件请求成功，上传成功")
 		}
 		return errors.New("请求失败")
@@ -88,7 +88,7 @@ func NextcloudUploadFile(rURL *string, b *[]byte, header *map[string]string) err
 }
 
 // 阿里云OSS上传
-func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret *string, bucketName *string, fileName *string, fileByte *[]byte) string {
+func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret *string, bucketName *string, fileName string, fileByte *[]byte) string {
 	client, err := oss.New(*endpoint, *accessKeyId, *accessKeySecret)
 	if err != nil {
 		// HandleError(err)
@@ -103,11 +103,11 @@ func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret 
 		os.Exit(-1)
 	}
 
-	err = bucket.PutObject(*fileName, bytes.NewReader([]byte(*fileByte)))
+	err = bucket.PutObject(fileName, bytes.NewReader([]byte(*fileByte)))
 	if err != nil {
 		// HandleError(err)
 		logging.Printf("阿里云上传失败，error：%v", err)
 		os.Exit(-1)
 	}
-	return "https://" + *bucketName + "." + *endpoint + "/" + *fileName
+	return "https://" + *bucketName + "." + *endpoint + "/" + fileName
 }

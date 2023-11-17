@@ -9,8 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${file}",
-            "args": ["https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcSuGWy4fXI1N7rutH8fhpFvLfucVjQJXJHhxYxNmc1tBim28eJITotvuOYPgOxd"]
+            "program": "${file}"
         }
     ]
 }

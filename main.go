@@ -3,13 +3,21 @@ package main
 import (
 	"fmt"
 	"os"
-	"typora_uploader_go/logs"
+	"path/filepath"
+	"typora_uploader_go/logging"
 	"typora_uploader_go/run"
 	"typora_uploader_go/utils"
 )
 
 func main() {
-	var logging = logs.LogFile()
+	//找到执行程序所在位置
+	ex, err := os.Executable()
+	if err != nil {
+		logging.Logger.Panic(err)
+	}
+	exPath := filepath.Dir(ex)
+	logging.NewLogger(exPath + "/server.log")
+
 	// var bs64 run.Base64
 	var local run.Local
 	var http run.Http
@@ -26,7 +34,7 @@ func main() {
 		//base64上传存在bug
 		if r.req == "base64" {
 			// r.url = *run.Run(&bs64, &args)
-			logging.Printf("暂不支持base64上传")
+			logging.Logger.Printf("暂不支持base64上传")
 			os.Exit(-1)
 		} else if r.req == "url" {
 			r.url = *run.Run(&http, &args)
@@ -34,8 +42,8 @@ func main() {
 			r.url = *run.Run(&local, &args)
 		}
 		if r.url != "" {
-			logging.Printf("Upload Success:\n")
-			logging.Printf(r.url + "\n")
+			logging.Logger.Printf("Upload Success:\n")
+			logging.Logger.Printf(r.url + "\n")
 			fmt.Printf("Upload Success:\n")
 			fmt.Printf(r.url + "\n")
 		}

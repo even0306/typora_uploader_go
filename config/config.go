@@ -2,19 +2,20 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
-	"typora_uploader_go/logs"
-	getexecpath "typora_uploader_go/utils/getExecPath"
+	"typora_uploader_go/logging"
 )
 
-var logging = logs.LogFile()
+type config interface {
+	ReadConfig(exPath string)
+}
 
 type picBed struct {
 	Picbed string `json:"picBed"`
 }
 
-type nextcloud struct {
+type Nextcloud struct {
 	picBed
 	UploadUrl   string `json:"uploadUrl"`
 	DownloadUrl string `json:"downloadUrl"`
@@ -23,7 +24,7 @@ type nextcloud struct {
 	Passwd      string `json:"passwd"`
 }
 
-type aliyunOss struct {
+type Oss struct {
 	picBed
 	Endpoint        string `json:"bucket"`
 	BucketName      string `json:"bucketName"`
@@ -31,56 +32,63 @@ type aliyunOss struct {
 	AccessKeySecret string `json:"accessKeySecret"`
 }
 
-var Config struct {
-	PicBed     string
-	Bucket     string
-	Domain     string
-	BucketName string
-	Path       string
-	User       string
-	Passwd     string
+type Platform struct {
+	MyPicBed    picBed
+	MyNextcloud Nextcloud
+	MyOss       Oss
 }
 
-func ReadConfig() interface{} {
-	jsonFile, err := os.Open(getexecpath.GetLocalPath() + "/config.json")
+var Config struct {
+	ExecPath string
+}
+
+func NewReadConfig() *Platform {
+	return &Platform{
+		MyPicBed:    picBed{},
+		MyNextcloud: Nextcloud{},
+		MyOss:       Oss{},
+	}
+}
+
+func (p *Platform) ReadConfig(exPath string) {
+	Config.ExecPath = exPath
+	jsonFile, err := os.Open(Config.ExecPath + "/config.json")
 	if err != nil {
-		logging.Printf("打开配置文件失败，error：%v", err)
+		logging.Logger.Printf("打开配置文件失败，error：%v", err)
 	}
 	defer jsonFile.Close()
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
-		logging.Printf("读取配置文件失败，error：%v", err)
+		logging.Logger.Printf("读取配置文件失败，error：%v", err)
 	}
 
-	var pb picBed
-	json.Unmarshal([]byte(byteValue), &pb)
-	getConfigValue(&byteValue, &pb)
-
-	return Config
+	json.Unmarshal([]byte(byteValue), &p.MyPicBed)
+	json.Unmarshal([]byte(byteValue), &p.MyNextcloud)
+	json.Unmarshal([]byte(byteValue), &p.MyOss)
 }
 
-func getConfigValue(byteValue *[]byte, picbed *picBed) {
-	switch {
-	case picbed.Picbed == "nextcloud":
-		var nextcloud nextcloud
-		json.Unmarshal([]byte(*byteValue), &nextcloud)
-		Config.PicBed = nextcloud.Picbed
-		Config.Bucket = nextcloud.UploadUrl
-		Config.Domain = nextcloud.DownloadUrl
-		Config.Path = nextcloud.Path
-		Config.User = nextcloud.User
-		Config.Passwd = nextcloud.Passwd
-	case picbed.Picbed == "aliyunOss":
-		var aliyunOss aliyunOss
-		json.Unmarshal([]byte(*byteValue), &aliyunOss)
-		Config.PicBed = aliyunOss.Picbed
-		Config.Bucket = aliyunOss.Endpoint
-		Config.Domain = aliyunOss.Endpoint
-		Config.BucketName = aliyunOss.BucketName
-		Config.User = aliyunOss.AccessKeyId
-		Config.Passwd = aliyunOss.AccessKeySecret
-	default:
-		logging.Print("不支持的图床类型")
-		os.Exit(-1)
-	}
-}
+// func getConfigValue(byteValue *[]byte, picbed *picBed) {
+// 	switch {
+// 	case picbed.Picbed == "nextcloud":
+// 		var nextcloud Nextcloud
+// 		json.Unmarshal([]byte(*byteValue), &nextcloud)
+// 		Config.PicBed = nextcloud.Picbed
+// 		Config.Bucket = nextcloud.UploadUrl
+// 		Config.Domain = nextcloud.DownloadUrl
+// 		Config.Path = nextcloud.Path
+// 		Config.User = nextcloud.User
+// 		Config.Passwd = nextcloud.Passwd
+// 	case picbed.Picbed == "aliyunOss":
+// 		var aliyunOss aliyunOss
+// 		json.Unmarshal([]byte(*byteValue), &aliyunOss)
+// 		Config.PicBed = aliyunOss.Picbed
+// 		Config.Bucket = aliyunOss.Endpoint
+// 		Config.Domain = aliyunOss.Endpoint
+// 		Config.BucketName = aliyunOss.BucketName
+// 		Config.User = aliyunOss.AccessKeyId
+// 		Config.Passwd = aliyunOss.AccessKeySecret
+// 	default:
+// 		logging.Logger.Print("不支持的图床类型")
+// 		os.Exit(-1)
+// 	}
+// }

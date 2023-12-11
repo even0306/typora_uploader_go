@@ -6,57 +6,51 @@ import (
 	"os"
 	"strings"
 	"typora_uploader_go/config"
-	"typora_uploader_go/logs"
 	"typora_uploader_go/upload"
 	"typora_uploader_go/utils"
-	getexecpath "typora_uploader_go/utils/getExecPath"
 )
 
-type Base64 struct {
-	Data
+type run interface {
+	Upload(uploadData *string) *string
 }
 
-type Local struct {
-	Data
-}
-
-type Http struct {
-	Data
-}
-
-type Data struct {
-	filePath    string
-	fileName    string
-	UploadUrl   string
-	DownloadUrl string
-	Auth        map[string]string
-	ConfigPath  string
-}
-
-var conf = config.ReadConfig().(struct {
-	PicBed     string
-	Bucket     string
-	Domain     string
-	BucketName string
-	Path       string
-	User       string
-	Passwd     string
-})
-
-var resq struct {
+type MyBase64 struct {
 	fmtUrl   string
 	upName   string
 	filetype string
 }
 
-type Upload interface {
-	upload(uploadData *string) *string
+type MyLocal struct {
+	fmtUrl   string
+	upName   string
+	filetype string
 }
 
-var logging = logs.LogFile()
+type MyHttp struct {
+	fmtUrl   string
+	upName   string
+	filetype string
+}
+
+func NewBase64Uploader[T *config.Nextcloud | *config.Oss](conf T) *MyBase64 {
+	conf.(type)
+	return &MyBase64{
+		fmtUrl:   ,
+		upName:   "",
+		filetype: "",
+	}
+}
+
+func NewLocalUploader[T *config.Nextcloud | *config.Oss](conf T) *MyLocal {
+	return &MyLocal{}
+}
+
+func NewHttpUploader[T *config.Nextcloud | *config.Oss](conf T) *MyHttp {
+	return &MyHttp{}
+}
 
 // base64上传
-func (b *Base64) upload(args *string) *string {
+func (b *MyBase64) Upload(args *string) *string {
 	user := conf.User
 	passwd := conf.Passwd
 	b.UploadUrl = conf.Bucket + "/" + user + "/" + conf.Path + "/"
@@ -85,7 +79,7 @@ func (b *Base64) upload(args *string) *string {
 }
 
 // 本地文件上传
-func (l *Local) upload(args *string) *string {
+func (l *MyLocal) Upload(args *string) *string {
 	user := conf.User
 	passwd := conf.Passwd
 	l.UploadUrl = conf.Bucket + "/" + user + "/" + conf.Path + "/"
@@ -118,7 +112,7 @@ func (l *Local) upload(args *string) *string {
 }
 
 // 网络文件上传
-func (h *Http) upload(args *string) *string {
+func (h *MyHttp) Upload(args *string) *string {
 	user := conf.User
 	passwd := conf.Passwd
 	h.UploadUrl = conf.Bucket + "/" + user + "/" + conf.Path + "/"
@@ -156,9 +150,4 @@ func (h *Http) upload(args *string) *string {
 		resq.fmtUrl = upload.AliyunOssUploadFile(&conf.Bucket, &conf.User, &conf.Passwd, &conf.BucketName, h.fileName, file)
 	}
 	return &resq.fmtUrl
-}
-
-func Run(up Upload, args *string) *string {
-	arg := up.upload(args)
-	return arg
 }

@@ -5,12 +5,11 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
 	"time"
-	"typora_uploader_go/logs"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
@@ -60,7 +59,7 @@ func NextcloudUploadFile(rURL string, b *[]byte, header *map[string]string) erro
 	if resp != nil {
 		// 判断请求状态
 		if resp.StatusCode == http.StatusOK {
-			respData, err := ioutil.ReadAll(resp.Body)
+			respData, err := io.ReadAll(resp.Body)
 			if err != nil {
 				logging.Print(err)
 				return err
@@ -70,7 +69,7 @@ func NextcloudUploadFile(rURL string, b *[]byte, header *map[string]string) erro
 			fmt.Println(string(respData))
 			return nil
 		} else if resp.StatusCode != http.StatusOK {
-			respData, err := ioutil.ReadAll(resp.Body)
+			respData, err := io.ReadAll(resp.Body)
 			if err != nil {
 				logging.Print(err)
 				return err

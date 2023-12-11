@@ -2,15 +2,30 @@ package platform
 
 import (
 	"os"
-	"typora_uploader_go/config"
 	"typora_uploader_go/logging"
+	"typora_uploader_go/platform/config"
 	"typora_uploader_go/run"
 )
 
 func PlatformAssert(platformConfig *config.PlatformConfig, fileType string, arg *string) string {
 	var downloadUrl string
 
-	run.NewPlatformSelecter(&platformConfig.MyPicBed.Picbed)
+	switch fileType {
+	case "base64":
+		logging.Logger.Printf("暂不支持base64上传")
+		os.Exit(-1)
+	case "url":
+		switch platformConfig.PicBed.Picbed {
+		case "nextcloud":
+
+		case "aliyunOss", "minIO":
+
+		default:
+			logging.Logger.Panicf("不支持的平台")
+		}
+	case "local":
+
+	}
 
 	switch platformConfig.MyPicBed.Picbed {
 	case "nextcloud":

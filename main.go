@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"typora_uploader_go/config"
 	"typora_uploader_go/logging"
-	"typora_uploader_go/platform"
+	"typora_uploader_go/platform/config"
+	"typora_uploader_go/run"
 	"typora_uploader_go/utils"
 )
 
@@ -26,9 +26,9 @@ func main() {
 		if idx == 0 {
 			continue
 		}
-		fileType := utils.FileType(&args)
+		fileType := utils.SrcType(&args)
 
-		downloadUrl := platform.PlatformAssert(PlantformConfig, fileType, &args)
+		downloadUrl := run.Run(PlantformConfig, fileType, &args)
 
 		if downloadUrl != "" {
 			logging.Logger.Printf("Upload Success:\n")

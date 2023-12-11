@@ -15,8 +15,8 @@ import (
 
 var logging = logs.LogFile()
 
-// 判断数据类型
-func FileType(file *string) (filetype string) {
+// 判断文件来源类型
+func SrcType(file *string) (filetype string) {
 
 	if *file != "" {
 		req := strings.Split(*file, ":")[0]

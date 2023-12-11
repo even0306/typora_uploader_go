@@ -32,7 +32,7 @@ type Oss struct {
 	AccessKeySecret string `json:"accessKeySecret"`
 }
 
-type Platform struct {
+type PlatformConfig struct {
 	MyPicBed    picBed
 	MyNextcloud Nextcloud
 	MyOss       Oss
@@ -42,15 +42,15 @@ var Config struct {
 	ExecPath string
 }
 
-func NewReadConfig() *Platform {
-	return &Platform{
+func NewReadConfig() *PlatformConfig {
+	return &PlatformConfig{
 		MyPicBed:    picBed{},
 		MyNextcloud: Nextcloud{},
 		MyOss:       Oss{},
 	}
 }
 
-func (p *Platform) ReadConfig(exPath string) {
+func (p *PlatformConfig) ReadConfig(exPath string) {
 	Config.ExecPath = exPath
 	jsonFile, err := os.Open(Config.ExecPath + "/config.json")
 	if err != nil {

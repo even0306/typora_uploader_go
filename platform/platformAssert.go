@@ -7,8 +7,10 @@ import (
 	"typora_uploader_go/run"
 )
 
-func PlatformAssert(platformConfig *config.Platform, fileType string, arg *string) string {
+func PlatformAssert(platformConfig *config.PlatformConfig, fileType string, arg *string) string {
 	var downloadUrl string
+
+	run.NewPlatformSelecter(&platformConfig.MyPicBed.Picbed)
 
 	switch platformConfig.MyPicBed.Picbed {
 	case "nextcloud":
@@ -18,10 +20,10 @@ func PlatformAssert(platformConfig *config.Platform, fileType string, arg *strin
 			logging.Logger.Printf("暂不支持base64上传")
 			os.Exit(-1)
 		} else if fileType == "url" {
-			myHttp := run.NewHttpUploader(platformConfig.MyNextcloud)
+			myHttp := run.NewHttpUploader(*platformConfig)
 			downloadUrl = *myHttp.Upload(arg)
 		} else if fileType == "local" {
-
+			myLocal := run.NewHttpUploader(*platformConfig)
 			downloadUrl = *myLocal.Upload(arg)
 		}
 	case "aliyunOss", "minIO":
@@ -31,9 +33,11 @@ func PlatformAssert(platformConfig *config.Platform, fileType string, arg *strin
 			logging.Logger.Printf("暂不支持base64上传")
 			os.Exit(-1)
 		} else if fileType == "url" {
-			downloadUrl = *myhttp.Upload(arg)
+			myHttp := run.NewHttpUploader(*platformConfig)
+			downloadUrl = *myHttp.Upload(arg)
 		} else if fileType == "local" {
-			downloadUrl = *mylocal.Upload(arg)
+			myLocal := run.NewHttpUploader(*platformConfig)
+			downloadUrl = *myLocal.Upload(arg)
 		}
 	default:
 		logging.Logger.Panicf("不支持的平台")

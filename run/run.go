@@ -14,39 +14,62 @@ type run interface {
 	Upload(uploadData *string) *string
 }
 
+type Platform struct {
+	mybs64 MyBase64
+	mylo   MyLocal
+	myhp   MyHttp
+}
+
 type MyBase64 struct {
+	conf     config.PlatformConfig
 	fmtUrl   string
 	upName   string
 	filetype string
 }
 
 type MyLocal struct {
+	conf     config.PlatformConfig
 	fmtUrl   string
 	upName   string
 	filetype string
 }
 
 type MyHttp struct {
+	conf     config.PlatformConfig
 	fmtUrl   string
 	upName   string
 	filetype string
 }
 
-func NewBase64Uploader[T *config.Nextcloud | *config.Oss](conf T) *MyBase64 {
-	conf.(type)
+func NewPlatformSelecter(pt *string) *Platform {
+	return &Platform{}
+}
+
+func NewBase64Uploader(conf config.PlatformConfig) *MyBase64 {
 	return &MyBase64{
-		fmtUrl:   ,
+		conf:     conf,
+		fmtUrl:   "",
 		upName:   "",
 		filetype: "",
 	}
 }
 
-func NewLocalUploader[T *config.Nextcloud | *config.Oss](conf T) *MyLocal {
-	return &MyLocal{}
+func NewLocalUploader(conf config.PlatformConfig) *MyLocal {
+	return &MyLocal{
+		conf:     conf,
+		fmtUrl:   "",
+		upName:   "",
+		filetype: "",
+	}
 }
 
-func NewHttpUploader[T *config.Nextcloud | *config.Oss](conf T) *MyHttp {
-	return &MyHttp{}
+func NewHttpUploader(conf config.PlatformConfig) *MyHttp {
+	return &MyHttp{
+		conf:     conf,
+		fmtUrl:   "",
+		upName:   "",
+		filetype: "",
+	}
 }
 
 // base64上传

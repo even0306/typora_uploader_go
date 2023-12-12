@@ -32,3 +32,16 @@ nextcloud使用__File sharing__插件实现直链下载，使用开放api接口�
     "downloadUrl": ""     //阿里云不填写
 }
 ```
+
+## minIO OSS对象存储图床配置文件说明，注意复制使用时请去掉注释
+
+```json
+{
+    "picBed": "minIO",     //minIO OSS对象存储图床
+    "endpoint": "play.min.io",     //minIO OSS endpoint，带上端口
+    "bucketName": "",     //minIO OSS bucket名称
+    "accessKeyId": "",     //minIO OSS accessKeyId
+    "accessKeySecret": "",     //minIO OSS accessKeySecret
+    "downloadUrl": ""     //minIO OSS 不填写
+}
+```

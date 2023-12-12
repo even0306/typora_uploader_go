@@ -7,10 +7,6 @@ import (
 	"typora_uploader_go/logging"
 )
 
-type config interface {
-	ReadConfig(exPath string)
-}
-
 type PicBed struct {
 	Picbed string `json:"picBed"`
 }
@@ -22,6 +18,7 @@ type Platform struct {
 	AccessKeyId     string `json:"accessKeyId"`
 	AccessKeySecret string `json:"accessKeySecret"`
 	DownloadUrl     string `json:"downloadUrl"`
+	UseSSL          bool   `json:"useSSL"`
 }
 
 var Config struct {
@@ -30,14 +27,13 @@ var Config struct {
 
 func NewReadConfig() *Platform {
 	return &Platform{
-		PicBed: PicBed{
-			Picbed: "",
-		},
+		PicBed:          PicBed{Picbed: ""},
 		Endpoint:        "",
 		BucketName:      "",
 		AccessKeyId:     "",
 		AccessKeySecret: "",
 		DownloadUrl:     "",
+		UseSSL:          false,
 	}
 }
 

@@ -8,10 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
-	"os"
 	"time"
 	"typora_uploader_go/logging"
 
@@ -40,18 +38,6 @@ func UploadSelecter(pt MyLocal, b *[]byte) string {
 	return ""
 }
 
-// TimeoutDialer 连接超时和传输超时
-func timeoutDialer(cTimeout time.Duration, rwTimeout time.Duration) func(net, addr string) (c net.Conn, err error) {
-	return func(netw, addr string) (net.Conn, error) {
-		conn, err := net.DialTimeout(netw, addr, cTimeout)
-		if err != nil {
-			return nil, err
-		}
-		conn.SetDeadline(time.Now().Add(rwTimeout))
-		return conn, nil
-	}
-}
-
 // 上传接口，传url，文件二进制，参数头
 func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
 	auth := map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(header.AccessKeyId+":"+header.AccessKeySecret))}
@@ -72,7 +58,14 @@ func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: false,
 			},
-			Dial: timeoutDialer(connectTimeout, readWriteTimeout),
+			Dial: func(netw, addr string) (net.Conn, error) {
+				conn, err := net.DialTimeout(netw, addr, connectTimeout)
+				if err != nil {
+					return nil, err
+				}
+				conn.SetDeadline(time.Now().Add(readWriteTimeout))
+				return conn, nil
+			},
 		},
 	}
 	resp, err := client.Do(req)
@@ -117,22 +110,19 @@ func AliyunOssUploadFile(header MyLocal, fileByte *[]byte) string {
 	client, err := oss.New(header.UploadURL, header.AccessKeyId, header.AccessKeySecret)
 	if err != nil {
 		// HandleError(err)
-		logging.Logger.Printf("创建阿里云上传客户端失败，error：%v", err)
-		os.Exit(-1)
+		logging.Logger.Panicf("创建阿里云上传客户端失败，error：%v", err)
 	}
 
 	bucket, err := client.Bucket(header.BucketName)
 	if err != nil {
 		// HandleError(err)
-		logging.Logger.Printf("获取阿里云桶失败，error：%v", err)
-		os.Exit(-1)
+		logging.Logger.Panicf("获取阿里云桶失败，error：%v", err)
 	}
 
 	err = bucket.PutObject(header.FileName, bytes.NewReader([]byte(*fileByte)))
 	if err != nil {
 		// HandleError(err)
-		logging.Logger.Printf("阿里云上传失败，error：%v", err)
-		os.Exit(-1)
+		logging.Logger.Panicf("阿里云上传失败，error：%v", err)
 	}
 	return "https://" + header.DownloadURL
 }
@@ -148,7 +138,7 @@ func MinIOUploadFile(header MyLocal, fileByte *[]byte) string {
 		Secure: useSSL,
 	})
 	if err != nil {
-		log.Fatalln(err)
+		logging.Logger.Panicf("初始化minio client失败：%v", err)
 	}
 
 	byteReader := bytes.NewReader(*fileByte)
@@ -156,7 +146,7 @@ func MinIOUploadFile(header MyLocal, fileByte *[]byte) string {
 	// Upload the test file with FPutObject
 	_, err = minioClient.PutObject(ctx, header.BucketName, header.FileName, byteReader, byteReader.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {
-		logging.Logger.Fatalln(err)
+		logging.Logger.Panicf("发送数据失败：%v", err)
 	}
 
 	return header.DownloadURL

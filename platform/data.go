@@ -25,6 +25,7 @@ type MyLocal struct {
 	AccessKeySecret string
 	BucketName      string
 	FileName        string
+	UseSSL          bool
 }
 
 type MyHttp struct {
@@ -58,6 +59,7 @@ func NewLocalUploader() *MyLocal {
 		AccessKeySecret: "",
 		BucketName:      "",
 		FileName:        "",
+		UseSSL:          false,
 	}
 }
 
@@ -119,6 +121,7 @@ func (l *MyLocal) UploadPrepare(conf *config.Platform, args *string) (MyLocal, *
 	fileName := utils.CreateUUID() + "." + filetype
 	l.AccessKeyId = conf.AccessKeyId
 	l.AccessKeySecret = conf.AccessKeySecret
+	l.UseSSL = conf.UseSSL
 
 	switch conf.PicBed.Picbed {
 	case "nextcloud":
@@ -133,8 +136,8 @@ func (l *MyLocal) UploadPrepare(conf *config.Platform, args *string) (MyLocal, *
 		l.FileName = fileName
 	case "minIO":
 		l.PicBed = conf.PicBed.Picbed
-		l.UploadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
-		l.DownloadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
+		l.UploadURL = conf.Endpoint
+		l.DownloadURL = "http://" + conf.Endpoint + "/" + conf.BucketName + "/" + fileName
 		l.BucketName = conf.BucketName
 		l.FileName = fileName
 	default:

@@ -1,4 +1,5 @@
 # typora图片上传工具
+
 typora plugin，PicUploader
 
 在学习go语言，刚好没有找到喜欢的typora图片上传插件，便自己边查边学边练，做出来了。练手项目，写的不好
@@ -6,8 +7,9 @@ typora plugin，PicUploader
 
 nextcloud使用__File sharing__插件实现直链下载，使用开放api接口上传
 
-#### nextcloud图床配置文件说明，注意复制使用时请去掉注释
-```
+## nextcloud图床配置文件说明，注意复制使用时请去掉注释
+
+```json
 {
   "picBed": "nextcloud",    //nextcloud图床
   "endpoint": "http[s]://[host]/remote.php/dav/files",    //nextcloud的上传地址
@@ -18,8 +20,9 @@ nextcloud使用__File sharing__插件实现直链下载，使用开放api接口�
 }
 ```
 
-#### 阿里云OSS对象存储图床配置文件说明，注意复制使用时请去掉注释
-```
+## 阿里云OSS对象存储图床配置文件说明，注意复制使用时请去掉注释
+
+```json
 {
     "picBed": "aliyunOss",     //阿里云OSS对象存储图床
     "endpoint": "oss-cn-hangzhou.aliyuncs.com",     //阿里云OSS endpoint

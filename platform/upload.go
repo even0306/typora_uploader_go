@@ -2,11 +2,13 @@ package platform
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -14,6 +16,8 @@ import (
 	"typora_uploader_go/logging"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 func UploadSelecter(pt MyLocal, b *[]byte) string {
@@ -24,8 +28,11 @@ func UploadSelecter(pt MyLocal, b *[]byte) string {
 			logging.Logger.Panicf("未获取到下载地址：%v", err)
 		}
 		return viewURL
-	case "aliyunOss", "minIO":
-		viewURL := OssUploadFile(pt, b)
+	case "aliyunOss":
+		viewURL := AliyunOssUploadFile(pt, b)
+		return viewURL
+	case "minIO":
+		viewURL := MinIOUploadFile(pt, b)
 		return viewURL
 	default:
 		logging.Logger.Println("不支持的平台")
@@ -105,7 +112,7 @@ func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
 }
 
 // 阿里云OSS上传
-func OssUploadFile(header MyLocal, fileByte *[]byte) string {
+func AliyunOssUploadFile(header MyLocal, fileByte *[]byte) string {
 	// func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret *string, bucketName *string, fileName string, fileByte *[]byte) string {
 	client, err := oss.New(header.UploadURL, header.AccessKeyId, header.AccessKeySecret)
 	if err != nil {
@@ -128,4 +135,29 @@ func OssUploadFile(header MyLocal, fileByte *[]byte) string {
 		os.Exit(-1)
 	}
 	return "https://" + header.DownloadURL
+}
+
+// minIO OSS上传
+func MinIOUploadFile(header MyLocal, fileByte *[]byte) string {
+	ctx := context.Background()
+	useSSL := false
+
+	// Initialize minio client object.
+	minioClient, err := minio.New(header.UploadURL, &minio.Options{
+		Creds:  credentials.NewStaticV4(header.AccessKeyId, header.AccessKeySecret, ""),
+		Secure: useSSL,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	byteReader := bytes.NewReader(*fileByte)
+
+	// Upload the test file with FPutObject
+	_, err = minioClient.PutObject(ctx, header.BucketName, header.FileName, byteReader, byteReader.Size(), minio.PutObjectOptions{ContentType: "application/octet-stream"})
+	if err != nil {
+		logging.Logger.Fatalln(err)
+	}
+
+	return header.DownloadURL
 }

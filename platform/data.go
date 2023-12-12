@@ -7,10 +7,6 @@ import (
 	"typora_uploader_go/utils"
 )
 
-type dataPrepare interface {
-	UploadPrepare(uploadData *string) *string
-}
-
 type MyBase64 struct {
 	conf        config.Platform
 	uploadURL   string
@@ -129,15 +125,16 @@ func (l *MyLocal) UploadPrepare(conf *config.Platform, args *string) (MyLocal, *
 		l.PicBed = conf.PicBed.Picbed
 		l.UploadURL = conf.Endpoint + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
 		l.DownloadURL = conf.DownloadUrl + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
-	case "aliyunOss", "minIO":
+	case "aliyunOss":
 		l.PicBed = conf.PicBed.Picbed
 		l.UploadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
-		if conf.PicBed.Picbed == "aliyunOss" {
-			l.DownloadURL = conf.BucketName + "." + conf.Endpoint + "/" + fileName
-		} else {
-			l.DownloadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
-		}
-
+		l.DownloadURL = conf.BucketName + "." + conf.Endpoint + "/" + fileName
+		l.BucketName = conf.BucketName
+		l.FileName = fileName
+	case "minIO":
+		l.PicBed = conf.PicBed.Picbed
+		l.UploadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
+		l.DownloadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
 		l.BucketName = conf.BucketName
 		l.FileName = fileName
 	default:

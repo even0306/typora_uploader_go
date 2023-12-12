@@ -7,13 +7,11 @@ import (
 	"os"
 	"strings"
 	"time"
-	"typora_uploader_go/logs"
+	"typora_uploader_go/logging"
 
 	"github.com/google/uuid"
 	"golang.org/x/sys/windows/registry"
 )
-
-var logging = logs.LogFile()
 
 // 判断文件来源类型
 func SrcType(file *string) (filetype string) {
@@ -28,7 +26,7 @@ func SrcType(file *string) (filetype string) {
 			filetype = "local"
 		}
 	} else {
-		logging.Printf("数据不能为空")
+		logging.Logger.Printf("数据不能为空")
 	}
 	return
 }
@@ -37,7 +35,7 @@ func SrcType(file *string) (filetype string) {
 func ReadFile(path *string) (b *[]byte, e error) {
 	file, err := os.Open(*path)
 	if err != nil {
-		logging.Printf("打开文件失败, error: %v", err)
+		logging.Logger.Printf("打开文件失败, error: %v", err)
 		return
 	}
 	defer file.Close()
@@ -46,7 +44,7 @@ func ReadFile(path *string) (b *[]byte, e error) {
 	for {
 		n, err := file.Read(buf)
 		if err != nil && err != io.EOF {
-			logging.Printf("读取文件失败，error: %v", err)
+			logging.Logger.Printf("读取文件失败，error: %v", err)
 		}
 		if n == 0 {
 			break
@@ -63,15 +61,15 @@ func DownloadFile(imgUrl string, path string) {
 		`SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`,
 		registry.QUERY_VALUE)
 	if err != nil {
-		logging.Fatal(err)
+		logging.Logger.Fatal(err)
 	}
 	val, _, err := key.GetStringValue("ProxyServer")
 	if err != nil {
-		logging.Fatal(err)
+		logging.Logger.Fatal(err)
 	}
 	uri, err := url.Parse("http://" + val)
 	if err != nil {
-		logging.Fatal(err)
+		logging.Logger.Fatal(err)
 	}
 
 	client := http.Client{
@@ -83,12 +81,12 @@ func DownloadFile(imgUrl string, path string) {
 
 	resp, err := client.Get(imgUrl)
 	if err != nil {
-		logging.Print(err)
+		logging.Logger.Print(err)
 	}
 	if resp != nil {
 		defer resp.Body.Close()
 	} else {
-		logging.Panicf("cannot get '%v'", imgUrl)
+		logging.Logger.Panicf("cannot get '%v'", imgUrl)
 	}
 
 	// 创建一个文件用于保存

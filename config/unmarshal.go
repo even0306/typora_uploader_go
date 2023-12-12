@@ -15,7 +15,7 @@ type PicBed struct {
 	Picbed string `json:"picBed"`
 }
 
-type PlatformConfig struct {
+type Platform struct {
 	PicBed          PicBed
 	Endpoint        string `json:"bucket"`
 	BucketName      string `json:"bucketName"`
@@ -28,8 +28,8 @@ var Config struct {
 	ExecPath string
 }
 
-func NewReadConfig() *PlatformConfig {
-	return &PlatformConfig{
+func NewReadConfig() *Platform {
+	return &Platform{
 		PicBed:          PicBed{},
 		Endpoint:        "",
 		BucketName:      "",
@@ -39,7 +39,7 @@ func NewReadConfig() *PlatformConfig {
 	}
 }
 
-func (pf *PlatformConfig) ReadConfig(exPath string) {
+func (pf *Platform) ReadConfig(exPath string) {
 	Config.ExecPath = exPath
 	jsonFile, err := os.Open(Config.ExecPath + "/config.json")
 	if err != nil {

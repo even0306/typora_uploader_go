@@ -1,24 +1,18 @@
 package run
 
 import (
-	"os"
+	"typora_uploader_go/config"
 	"typora_uploader_go/logging"
 	"typora_uploader_go/platform"
-	"typora_uploader_go/platform/config"
+	"typora_uploader_go/upload"
 )
 
-func Run(conf *config.PlatformConfig, srcType string, arg *string) string {
-	switch srcType {
-	case "base64":
-		logging.Logger.Printf("暂不支持base64上传")
-		os.Exit(-1)
-	case "url":
-		myhp := platform.NewHttpUploader(*conf)
-		myhp.UploadPrepare(arg)
-	case "local":
-		mylo := platform.NewLocalUploader(*conf)
-		mylo.UploadPrepare(arg)
+func Run(conf *config.Platform, srcType string, arg *string) string {
+	mylo := platform.NewLocalUploader()
+	preConf, fileByte := mylo.UploadPrepare(conf, arg)
+	viewURL, err := upload.NextcloudUploadFile(preConf, fileByte)
+	if err != nil {
+		logging.Logger.Panicf("未获取到下载地址：%v", err)
 	}
-
-	return ""
+	return viewURL
 }

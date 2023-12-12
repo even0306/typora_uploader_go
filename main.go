@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"typora_uploader_go/config"
 	"typora_uploader_go/logging"
-	"typora_uploader_go/platform/config"
 	"typora_uploader_go/run"
 	"typora_uploader_go/utils"
 )

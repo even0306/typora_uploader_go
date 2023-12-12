@@ -3,6 +3,7 @@ package upload
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -10,9 +11,16 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"typora_uploader_go/logging"
+	"typora_uploader_go/platform"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
+
+type uploader interface {
+	NextcloudUploadFile(header platform.MyLocal, fileByte *[]byte) (string, error)
+	OssUploadFile(header platform.MyLocal, fileByte *[]byte) string
+}
 
 // TimeoutDialer 连接超时和传输超时
 func timeoutDialer(cTimeout time.Duration, rwTimeout time.Duration) func(net, addr string) (c net.Conn, err error) {
@@ -26,17 +34,15 @@ func timeoutDialer(cTimeout time.Duration, rwTimeout time.Duration) func(net, ad
 	}
 }
 
-var logging = logs.LogFile()
-
 // 上传接口，传url，文件二进制，参数头
-func NextcloudUploadFile(rURL string, b *[]byte, header *map[string]string) error {
-
-	req, err := http.NewRequest("PUT", rURL, bytes.NewBuffer(*b))
+func NextcloudUploadFile(header platform.MyLocal, fileByte *[]byte) (string, error) {
+	auth := map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(header.AccessKeyId+":"+header.AccessKeySecret))}
+	req, err := http.NewRequest("PUT", header.UploadURL, bytes.NewBuffer(*fileByte))
 	if err != nil {
-		logging.Printf("http newrequest error %s", err)
-		return err
+		logging.Logger.Printf("http newrequest error %s", err)
+		return "", err
 	}
-	for h, v := range *header {
+	for h, v := range auth {
 		req.Header.Set(h, v)
 	}
 
@@ -53,60 +59,62 @@ func NextcloudUploadFile(rURL string, b *[]byte, header *map[string]string) erro
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		logging.Printf("http client error %s", err)
-		return err
+		logging.Logger.Printf("http client error %s", err)
+		return "", err
 	}
 	if resp != nil {
 		// 判断请求状态
 		if resp.StatusCode == http.StatusOK {
 			respData, err := io.ReadAll(resp.Body)
 			if err != nil {
-				logging.Print(err)
-				return err
+				logging.Logger.Print(err)
+				return "", err
 			}
-			logging.Printf("\n【请求地址】： %s \n【请求参数】： %s \n【请求头】： %s \n【返回】 : %s \n",
-				rURL, "上传文件", *header, string(respData))
+			logging.Logger.Printf("\n【请求地址】： %s \n【请求参数】： %s \n【请求头】： %s \n【返回】 : %s \n",
+				header.UploadURL, "上传文件", auth, string(respData))
 			fmt.Println(string(respData))
-			return nil
+			return "", nil
 		} else if resp.StatusCode != http.StatusOK {
 			respData, err := io.ReadAll(resp.Body)
 			if err != nil {
-				logging.Print(err)
-				return err
+				logging.Logger.Print(err)
+				return "", err
 			}
 
-			logging.Printf("\n【请求地址】： %s \n【请求参数】： %s \n【请求头】： %s \n【返回】 : %s \n",
-				rURL, "上传文件", *header, string(respData))
-			return errors.New("上传文件请求成功，上传成功")
+			logging.Logger.Printf("\n【请求地址】： %s \n【请求参数】： %s \n【请求头】： %s \n【返回】 : %s \n", header.UploadURL, "上传文件", auth, string(respData))
+			logging.Logger.Println("上传文件请求成功，上传成功")
+			fmtUrl := header.DownloadURL + "\n"
+			return fmtUrl, nil
 		}
-		return errors.New("请求失败")
+		return "", errors.New("请求失败")
 	}
 	defer resp.Body.Close()
 
-	return errors.New("请求失败")
+	return "", errors.New("请求失败")
 }
 
 // 阿里云OSS上传
-func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret *string, bucketName *string, fileName string, fileByte *[]byte) string {
-	client, err := oss.New(*endpoint, *accessKeyId, *accessKeySecret)
+func OssUploadFile(header platform.MyLocal, fileByte *[]byte) string {
+	// func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret *string, bucketName *string, fileName string, fileByte *[]byte) string {
+	client, err := oss.New(header.UploadURL, header.AccessKeyId, header.AccessKeySecret)
 	if err != nil {
 		// HandleError(err)
-		logging.Printf("创建阿里云上传客户端失败，error：%v", err)
+		logging.Logger.Printf("创建阿里云上传客户端失败，error：%v", err)
 		os.Exit(-1)
 	}
 
-	bucket, err := client.Bucket(*bucketName)
+	bucket, err := client.Bucket(header.BucketName)
 	if err != nil {
 		// HandleError(err)
-		logging.Printf("获取阿里云桶失败，error：%v", err)
+		logging.Logger.Printf("获取阿里云桶失败，error：%v", err)
 		os.Exit(-1)
 	}
 
-	err = bucket.PutObject(fileName, bytes.NewReader([]byte(*fileByte)))
+	err = bucket.PutObject(header.FileName, bytes.NewReader([]byte(*fileByte)))
 	if err != nil {
 		// HandleError(err)
-		logging.Printf("阿里云上传失败，error：%v", err)
+		logging.Logger.Printf("阿里云上传失败，error：%v", err)
 		os.Exit(-1)
 	}
-	return "https://" + *bucketName + "." + *endpoint + "/" + fileName
+	return "https://" + header.DownloadURL
 }

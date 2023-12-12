@@ -1,12 +1,9 @@
 package platform
 
 import (
-	"encoding/base64"
-	"fmt"
 	"os"
+	"typora_uploader_go/config"
 	"typora_uploader_go/logging"
-	"typora_uploader_go/platform/config"
-	"typora_uploader_go/upload"
 	"typora_uploader_go/utils"
 )
 
@@ -15,7 +12,7 @@ type dataPrepare interface {
 }
 
 type MyBase64 struct {
-	conf        config.PlatformConfig
+	conf        config.Platform
 	uploadURL   string
 	downloadURL string
 	auth        map[string]string
@@ -25,17 +22,16 @@ type MyBase64 struct {
 }
 
 type MyLocal struct {
-	conf        config.PlatformConfig
-	uploadURL   string
-	downloadURL string
-	auth        map[string]string
-	fmtUrl      string
-	upName      string
-	filetype    string
+	UploadURL       string
+	DownloadURL     string
+	AccessKeyId     string
+	AccessKeySecret string
+	BucketName      string
+	FileName        string
 }
 
 type MyHttp struct {
-	conf        config.PlatformConfig
+	conf        config.Platform
 	uploadURL   string
 	downloadURL string
 	auth        map[string]string
@@ -44,7 +40,7 @@ type MyHttp struct {
 	filetype    string
 }
 
-func NewBase64Uploader(conf config.PlatformConfig) *MyBase64 {
+func NewBase64Uploader(conf config.Platform) *MyBase64 {
 	return &MyBase64{
 		conf:        conf,
 		uploadURL:   "",
@@ -56,19 +52,18 @@ func NewBase64Uploader(conf config.PlatformConfig) *MyBase64 {
 	}
 }
 
-func NewLocalUploader(conf config.PlatformConfig) *MyLocal {
+func NewLocalUploader() *MyLocal {
 	return &MyLocal{
-		conf:        conf,
-		uploadURL:   "",
-		downloadURL: "",
-		auth:        map[string]string{},
-		fmtUrl:      "",
-		upName:      "",
-		filetype:    "",
+		UploadURL:       "",
+		DownloadURL:     "",
+		AccessKeyId:     "",
+		AccessKeySecret: "",
+		BucketName:      "",
+		FileName:        "",
 	}
 }
 
-func NewHttpUploader(conf config.PlatformConfig) *MyHttp {
+func NewHttpUploader(conf config.Platform) *MyHttp {
 	return &MyHttp{
 		conf:        conf,
 		uploadURL:   "",
@@ -110,12 +105,7 @@ func NewHttpUploader(conf config.PlatformConfig) *MyHttp {
 // }
 
 // 本地文件上传
-func (l *MyLocal) UploadPrepare(args *string) *string {
-	accessKeyId := l.conf.AccessKeyId
-	accessKeySecret := l.conf.AccessKeySecret
-	l.uploadURL = l.conf.Endpoint + "/" + accessKeyId + "/" + l.conf.BucketName + "/"
-	l.downloadURL = l.conf.DownloadUrl + "/" + accessKeyId + "/" + l.conf.BucketName + "/"
-	l.auth = map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(accessKeyId+":"+accessKeySecret))}
+func (l *MyLocal) UploadPrepare(conf *config.Platform, args *string) (MyLocal, *[]byte) {
 	fileByte, err := utils.ReadFile(args)
 	if err != nil {
 		logging.Logger.Printf("读取文件失败，error：%v", err)
@@ -129,55 +119,61 @@ func (l *MyLocal) UploadPrepare(args *string) *string {
 	}
 
 	fileName := utils.CreateUUID() + "." + filetype
-	fullUploadURL := l.uploadURL + fileName
-	if conf.PicBed == "nextcloud" {
-		err = upload.NextcloudUploadFile(resq.upName, file, &l.Auth)
-		if err != nil {
-			resq.fmtUrl = l.DownloadUrl + l.fileName + "\n"
-		}
-	} else if conf.PicBed == "aliyunOss" {
-		resq.fmtUrl = upload.AliyunOssUploadFile(&conf.Bucket, &conf.User, &conf.Passwd, &conf.BucketName, l.fileName, file)
+	l.AccessKeyId = conf.AccessKeyId
+	l.AccessKeySecret = conf.AccessKeyId
+
+	switch conf.PicBed.Picbed {
+	case "nextcloud":
+		l.UploadURL = conf.Endpoint + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
+		l.DownloadURL = conf.DownloadUrl + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
+	case "aliyunOss", "minIO":
+		l.UploadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
+		l.DownloadURL = conf.BucketName + "." + conf.Endpoint + "/" + fileName
+		l.BucketName = conf.BucketName
+		l.FileName = fileName
+	default:
 	}
-	return &resq.fmtUrl
+
+	return *l, fileByte
 }
 
 // 网络文件上传
-func (h *MyHttp) UploadPrepare(args *string) *string {
-	user := conf.User
-	passwd := conf.Passwd
-	h.UploadUrl = conf.Bucket + "/" + user + "/" + conf.Path + "/"
-	h.DownloadUrl = conf.Domain + "/" + user + "/" + conf.Path + "/"
-	h.Auth = map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(user+":"+passwd))}
-	uid := utils.CreateUUID()
+// func (h *MyHttp) UploadPrepare(args *string) *string {
+// 	user := conf.User
+// 	passwd := conf.Passwd
+// 	h.UploadUrl = conf.Bucket + "/" + user + "/" + conf.Path + "/"
+// 	h.DownloadUrl = conf.Domain + "/" + user + "/" + conf.Path + "/"
+// 	h.Auth = map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(user+":"+passwd))}
+// 	uid := utils.CreateUUID()
 
-	tmp := getexecpath.GetLocalPath() + "/" + uid
-	h.filePath = *args
-	utils.DownloadFile(h.filePath, tmp)
+// 	tmp := getexecpath.GetLocalPath() + "/" + uid
+// 	h.filePath = *args
+// 	utils.DownloadFile(h.filePath, tmp)
 
-	file, err := utils.ReadFile(&tmp)
-	if err != nil {
-		logging.Logger.Printf("读取文件失败，error：%v", err)
-	}
+// 	file, err := utils.ReadFile(&tmp)
+// 	if err != nil {
+// 		logging.Logger.Printf("读取文件失败，error：%v", err)
+// 	}
 
-	//判断文件格式
-	resq.filetype = utils.GetFileExt(file)
-	if resq.filetype == "" {
-		logging.Logger.Printf("文件格式不支持")
-		os.Exit(-1)
-	}
-	h.fileName = uid + "." + resq.filetype
+// 	//判断文件格式
+// 	resq.filetype = utils.GetFileExt(file)
+// 	if resq.filetype == "" {
+// 		logging.Logger.Printf("文件格式不支持")
+// 		os.Exit(-1)
+// 	}
+// 	h.fileName = uid + "." + resq.filetype
 
-	err = os.Remove(tmp)
-	if err != nil {
-		fmt.Printf("删除缓存图片失败，error：%v", err)
-	}
-	if conf.PicBed == "nextcloud" {
-		err = upload.NextcloudUploadFile(h.UploadUrl+h.fileName, file, &h.Auth)
-		if err != nil {
-			resq.fmtUrl = h.DownloadUrl + h.fileName + "\n"
-		}
-	} else if conf.PicBed == "aliyunOss" {
-		resq.fmtUrl = upload.AliyunOssUploadFile(&conf.Bucket, &conf.User, &conf.Passwd, &conf.BucketName, h.fileName, file)
-	}
-	return &resq.fmtUrl
-}
+// 	err = os.Remove(tmp)
+// 	if err != nil {
+// 		fmt.Printf("删除缓存图片失败，error：%v", err)
+// 	}
+// 	if conf.PicBed == "nextcloud" {
+// 		err = upload.NextcloudUploadFile(h.UploadUrl+h.fileName, file, &h.Auth)
+// 		if err != nil {
+// 			resq.fmtUrl = h.DownloadUrl + h.fileName + "\n"
+// 		}
+// 	} else if conf.PicBed == "aliyunOss" {
+// 		resq.fmtUrl = upload.AliyunOssUploadFile(&conf.Bucket, &conf.User, &conf.Passwd, &conf.BucketName, h.fileName, file)
+// 	}
+// 	return &resq.fmtUrl
+// }

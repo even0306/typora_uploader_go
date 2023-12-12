@@ -3,6 +3,7 @@ package run
 import (
 	"encoding/base64"
 	"os"
+	"strings"
 	"typora_uploader_go/config"
 	"typora_uploader_go/logging"
 	"typora_uploader_go/platform"
@@ -26,7 +27,8 @@ func Run(conf *config.Platform, arg *string) string {
 		arg = &tmpFile
 		os.Rename(tmp, *arg)
 	} else if assert.SourceTypeAssert(arg) == "base" {
-		byteTmp, err := base64.StdEncoding.DecodeString(*arg)
+		bsData := strings.Split(*arg, ",")
+		byteTmp, err := base64.StdEncoding.DecodeString(bsData[1])
 		if err != nil {
 			logging.Logger.Panicln(err)
 		}

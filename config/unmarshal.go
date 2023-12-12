@@ -17,7 +17,7 @@ type PicBed struct {
 
 type Platform struct {
 	PicBed          PicBed
-	Endpoint        string `json:"bucket"`
+	Endpoint        string `json:"endpoint"`
 	BucketName      string `json:"bucketName"`
 	AccessKeyId     string `json:"accessKeyId"`
 	AccessKeySecret string `json:"accessKeySecret"`

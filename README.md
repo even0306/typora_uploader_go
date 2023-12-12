@@ -9,12 +9,12 @@ nextcloud使用__File sharing__插件实现直链下载，使用开放api接口�
 #### nextcloud图床配置文件说明，注意复制使用时请去掉注释
 ```
 {
-    "picBed": "nextcloud"     //nextcloud图床
-    "uploadUrl": "http[s]://[host]/remote.php/dav/files",     //nextcloud的上传地址
-    "downloadUrl": "http[s]://[host]/apps/sharingpath",     //nextcloud通过File sharing插件产生的下载地址
-    "path": "",     //在File sharing插件中设置的存储路径
-    "user": "",     //nextcloud的账号
-    "passwd": ""     //nextcloud的密码
+  "picBed": "nextcloud",    //nextcloud图床
+  "endpoint": "http[s]://[host]/remote.php/dav/files",    //nextcloud的上传地址
+  "bucketName": "",     //在File sharing插件中设置的存储路径
+  "accessKeyId": "",     //nextcloud的账号
+  "accessKeySecret": "",     //nextcloud的密码
+  "downloadUrl": "http[s]://[host]/apps/sharingpath"     //nextcloud通过File sharing插件产生的下载地址
 }
 ```
 
@@ -22,9 +22,10 @@ nextcloud使用__File sharing__插件实现直链下载，使用开放api接口�
 ```
 {
     "picBed": "aliyunOss",     //阿里云OSS对象存储图床
-    "bucket": "oss-cn-hangzhou.aliyuncs.com",     //阿里云OSS endpoint
+    "endpoint": "oss-cn-hangzhou.aliyuncs.com",     //阿里云OSS endpoint
     "bucketName": "",     //阿里云OSS bucket名称
     "accessKeyId": "",     //阿里云accessKeyId
-    "accessKeySecret": ""     //阿里云accessKeySecret
+    "accessKeySecret": "",     //阿里云accessKeySecret
+    "downloadUrl": ""     //阿里云不填写
 }
 ```

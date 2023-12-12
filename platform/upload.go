@@ -40,8 +40,13 @@ func UploadSelecter(pt MyLocal, b *[]byte) string {
 
 // 上传接口，传url，文件二进制，参数头
 func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
+	scheme := "http"
+	if header.UseSSL {
+		scheme = "https"
+	}
+
 	auth := map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(header.AccessKeyId+":"+header.AccessKeySecret))}
-	req, err := http.NewRequest("PUT", header.UploadURL, bytes.NewBuffer(*fileByte))
+	req, err := http.NewRequest("PUT", scheme+"://"+header.UploadURL, bytes.NewBuffer(*fileByte))
 	if err != nil {
 		logging.Logger.Printf("http newrequest error %s", err)
 		return "", err
@@ -94,7 +99,7 @@ func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
 
 			logging.Logger.Printf("\n【请求地址】： %s \n【请求参数】： %s \n【请求头】： %s \n【返回】 : %s \n", header.UploadURL, "上传文件", auth, string(respData))
 			logging.Logger.Println("上传文件请求成功，上传成功")
-			fmtUrl := header.DownloadURL + "\n"
+			fmtUrl := scheme + "://" + header.DownloadURL + "\n"
 			return fmtUrl, nil
 		}
 		return "", errors.New("请求失败")
@@ -106,6 +111,11 @@ func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
 
 // 阿里云OSS上传
 func AliyunOssUploadFile(header MyLocal, fileByte *[]byte) string {
+	scheme := "http"
+	if header.UseSSL {
+		scheme = "https"
+	}
+
 	// func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret *string, bucketName *string, fileName string, fileByte *[]byte) string {
 	client, err := oss.New(header.UploadURL, header.AccessKeyId, header.AccessKeySecret)
 	if err != nil {
@@ -124,18 +134,17 @@ func AliyunOssUploadFile(header MyLocal, fileByte *[]byte) string {
 		// HandleError(err)
 		logging.Logger.Panicf("阿里云上传失败，error：%v", err)
 	}
-	return "https://" + header.DownloadURL
+	return scheme + "://" + header.DownloadURL
 }
 
 // minIO OSS上传
 func MinIOUploadFile(header MyLocal, fileByte *[]byte) string {
 	ctx := context.Background()
-	useSSL := false
 
 	// Initialize minio client object.
 	minioClient, err := minio.New(header.UploadURL, &minio.Options{
 		Creds:  credentials.NewStaticV4(header.AccessKeyId, header.AccessKeySecret, ""),
-		Secure: useSSL,
+		Secure: header.UseSSL,
 	})
 	if err != nil {
 		logging.Logger.Panicf("初始化minio client失败：%v", err)

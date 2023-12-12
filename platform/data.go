@@ -22,6 +22,7 @@ type MyBase64 struct {
 }
 
 type MyLocal struct {
+	PicBed          string
 	UploadURL       string
 	DownloadURL     string
 	AccessKeyId     string
@@ -54,6 +55,7 @@ func NewBase64Uploader(conf config.Platform) *MyBase64 {
 
 func NewLocalUploader() *MyLocal {
 	return &MyLocal{
+		PicBed:          "",
 		UploadURL:       "",
 		DownloadURL:     "",
 		AccessKeyId:     "",
@@ -120,18 +122,26 @@ func (l *MyLocal) UploadPrepare(conf *config.Platform, args *string) (MyLocal, *
 
 	fileName := utils.CreateUUID() + "." + filetype
 	l.AccessKeyId = conf.AccessKeyId
-	l.AccessKeySecret = conf.AccessKeyId
+	l.AccessKeySecret = conf.AccessKeySecret
 
 	switch conf.PicBed.Picbed {
 	case "nextcloud":
+		l.PicBed = conf.PicBed.Picbed
 		l.UploadURL = conf.Endpoint + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
 		l.DownloadURL = conf.DownloadUrl + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
 	case "aliyunOss", "minIO":
+		l.PicBed = conf.PicBed.Picbed
 		l.UploadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
-		l.DownloadURL = conf.BucketName + "." + conf.Endpoint + "/" + fileName
+		if conf.PicBed.Picbed == "aliyunOss" {
+			l.DownloadURL = conf.BucketName + "." + conf.Endpoint + "/" + fileName
+		} else {
+			l.DownloadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
+		}
+
 		l.BucketName = conf.BucketName
 		l.FileName = fileName
 	default:
+		logging.Logger.Println("不支持的平台")
 	}
 
 	return *l, fileByte

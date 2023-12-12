@@ -30,7 +30,9 @@ var Config struct {
 
 func NewReadConfig() *Platform {
 	return &Platform{
-		PicBed:          PicBed{},
+		PicBed: PicBed{
+			Picbed: "",
+		},
 		Endpoint:        "",
 		BucketName:      "",
 		AccessKeyId:     "",
@@ -51,5 +53,6 @@ func (pf *Platform) ReadConfig(exPath string) {
 		logging.Logger.Printf("读取配置文件失败，error：%v", err)
 	}
 
+	json.Unmarshal([]byte(byteValue), &pf.PicBed)
 	json.Unmarshal([]byte(byteValue), &pf)
 }

@@ -1,4 +1,4 @@
-package upload
+package platform
 
 import (
 	"bytes"
@@ -12,14 +12,25 @@ import (
 	"os"
 	"time"
 	"typora_uploader_go/logging"
-	"typora_uploader_go/platform"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
 
-type uploader interface {
-	NextcloudUploadFile(header platform.MyLocal, fileByte *[]byte) (string, error)
-	OssUploadFile(header platform.MyLocal, fileByte *[]byte) string
+func UploadSelecter(pt MyLocal, b *[]byte) string {
+	switch pt.PicBed {
+	case "nextcloud":
+		viewURL, err := NextcloudUploadFile(pt, b)
+		if err != nil {
+			logging.Logger.Panicf("未获取到下载地址：%v", err)
+		}
+		return viewURL
+	case "aliyunOss", "minIO":
+		viewURL := OssUploadFile(pt, b)
+		return viewURL
+	default:
+		logging.Logger.Println("不支持的平台")
+	}
+	return ""
 }
 
 // TimeoutDialer 连接超时和传输超时
@@ -35,7 +46,7 @@ func timeoutDialer(cTimeout time.Duration, rwTimeout time.Duration) func(net, ad
 }
 
 // 上传接口，传url，文件二进制，参数头
-func NextcloudUploadFile(header platform.MyLocal, fileByte *[]byte) (string, error) {
+func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
 	auth := map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(header.AccessKeyId+":"+header.AccessKeySecret))}
 	req, err := http.NewRequest("PUT", header.UploadURL, bytes.NewBuffer(*fileByte))
 	if err != nil {
@@ -94,7 +105,7 @@ func NextcloudUploadFile(header platform.MyLocal, fileByte *[]byte) (string, err
 }
 
 // 阿里云OSS上传
-func OssUploadFile(header platform.MyLocal, fileByte *[]byte) string {
+func OssUploadFile(header MyLocal, fileByte *[]byte) string {
 	// func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret *string, bucketName *string, fileName string, fileByte *[]byte) string {
 	client, err := oss.New(header.UploadURL, header.AccessKeyId, header.AccessKeySecret)
 	if err != nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 	"typora_uploader_go/config"
@@ -38,8 +39,8 @@ func main() {
 		downloadUrl := run.Run(PlantformConfig, &args)
 
 		if downloadUrl != "" {
-			logging.Logger.Printf("Upload Success:\n")
-			logging.Logger.Printf(downloadUrl + "\n")
+			fmt.Printf("Upload Success:\n")
+			fmt.Printf(downloadUrl + "\n")
 		}
 	}
 }

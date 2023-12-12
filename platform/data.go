@@ -7,17 +7,7 @@ import (
 	"typora_uploader_go/utils"
 )
 
-type MyBase64 struct {
-	conf        config.Platform
-	uploadURL   string
-	downloadURL string
-	auth        map[string]string
-	fmtUrl      string
-	upName      string
-	filetype    string
-}
-
-type MyLocal struct {
+type DataPreparer struct {
 	PicBed          string
 	UploadURL       string
 	DownloadURL     string
@@ -28,30 +18,8 @@ type MyLocal struct {
 	UseSSL          bool
 }
 
-type MyHttp struct {
-	conf        config.Platform
-	uploadURL   string
-	downloadURL string
-	auth        map[string]string
-	fmtUrl      string
-	upName      string
-	filetype    string
-}
-
-func NewBase64Uploader(conf config.Platform) *MyBase64 {
-	return &MyBase64{
-		conf:        conf,
-		uploadURL:   "",
-		downloadURL: "",
-		auth:        map[string]string{},
-		fmtUrl:      "",
-		upName:      "",
-		filetype:    "",
-	}
-}
-
-func NewLocalUploader() *MyLocal {
-	return &MyLocal{
+func NewDataPreparer() *DataPreparer {
+	return &DataPreparer{
 		PicBed:          "",
 		UploadURL:       "",
 		DownloadURL:     "",
@@ -60,18 +28,6 @@ func NewLocalUploader() *MyLocal {
 		BucketName:      "",
 		FileName:        "",
 		UseSSL:          false,
-	}
-}
-
-func NewHttpUploader(conf config.Platform) *MyHttp {
-	return &MyHttp{
-		conf:        conf,
-		uploadURL:   "",
-		downloadURL: "",
-		auth:        map[string]string{},
-		fmtUrl:      "",
-		upName:      "",
-		filetype:    "",
 	}
 }
 
@@ -105,7 +61,7 @@ func NewHttpUploader(conf config.Platform) *MyHttp {
 // }
 
 // 本地文件上传
-func (l *MyLocal) UploadPrepare(conf *config.Platform, args *string) (MyLocal, *[]byte) {
+func (l *DataPreparer) UploadPrepare(conf *config.Platform, args *string) (DataPreparer, *[]byte) {
 	fileByte, err := utils.ReadFile(args)
 	if err != nil {
 		logging.Logger.Printf("读取文件失败，error：%v", err)

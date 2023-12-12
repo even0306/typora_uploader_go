@@ -6,7 +6,7 @@ import (
 )
 
 func Run(conf *config.Platform, srcType string, arg *string) string {
-	mylo := platform.NewLocalUploader()
+	mylo := platform.NewDataPreparer()
 	preConf, fileByte := mylo.UploadPrepare(conf, arg)
 
 	viewURL := platform.UploadSelecter(preConf, fileByte)

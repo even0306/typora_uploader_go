@@ -18,7 +18,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-func UploadSelecter(pt MyLocal, b *[]byte) string {
+func UploadSelecter(pt DataPreparer, b *[]byte) string {
 	switch pt.PicBed {
 	case "nextcloud":
 		viewURL, err := NextcloudUploadFile(pt, b)
@@ -39,7 +39,7 @@ func UploadSelecter(pt MyLocal, b *[]byte) string {
 }
 
 // 上传接口，传url，文件二进制，参数头
-func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
+func NextcloudUploadFile(header DataPreparer, fileByte *[]byte) (string, error) {
 	scheme := "http"
 	if header.UseSSL {
 		scheme = "https"
@@ -110,7 +110,7 @@ func NextcloudUploadFile(header MyLocal, fileByte *[]byte) (string, error) {
 }
 
 // 阿里云OSS上传
-func AliyunOssUploadFile(header MyLocal, fileByte *[]byte) string {
+func AliyunOssUploadFile(header DataPreparer, fileByte *[]byte) string {
 	scheme := "http"
 	if header.UseSSL {
 		scheme = "https"
@@ -138,7 +138,7 @@ func AliyunOssUploadFile(header MyLocal, fileByte *[]byte) string {
 }
 
 // minIO OSS上传
-func MinIOUploadFile(header MyLocal, fileByte *[]byte) string {
+func MinIOUploadFile(header DataPreparer, fileByte *[]byte) string {
 	ctx := context.Background()
 
 	// Initialize minio client object.

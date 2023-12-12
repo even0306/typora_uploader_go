@@ -1,4 +1,4 @@
-package utils
+package assert
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 var fileTypeMap sync.Map
 
 func init() {
-	fileTypeMap.Store("ffd8ffe000104a464946", "jpg") //JPEG (jpg)
+	fileTypeMap.Store("ffd8ff", "jpg")               //JPEG (jpg)
 	fileTypeMap.Store("89504e470d0a1a0a0000", "png") //PNG (png)
 	fileTypeMap.Store("47494638396126026f01", "gif") //GIF (gif)
 }

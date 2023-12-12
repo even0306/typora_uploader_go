@@ -4,7 +4,9 @@ import (
 	"os"
 	"typora_uploader_go/config"
 	"typora_uploader_go/logging"
-	"typora_uploader_go/utils"
+	"typora_uploader_go/utils/assert"
+
+	"github.com/google/uuid"
 )
 
 type DataPreparer struct {
@@ -31,76 +33,46 @@ func NewDataPreparer() *DataPreparer {
 	}
 }
 
-// base64上传
-// func (b *MyBase64) UploadPrepare(args *string) *string {
-// 	accessKeyId := b.conf.AccessKeyId
-// 	accessKeySecret := b.conf.AccessKeySecret
-// 	b.uploadURL = b.conf.Endpoint + "/" + accessKeyId + "/" + b.conf.BucketName + "/"
-// 	b.downloadURL = b.conf.DownloadUrl + "/" + accessKeyId + "/" + b.conf.BucketName + "/"
-// 	b.auth = map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(accessKeyId+":"+accessKeySecret))}
-// 	b.filePath = strings.Split(strings.Split(*args, "base64,")[1], ")")[0]
-// 	file, err := base64.StdEncoding.DecodeString(string(b.filePath))
-// 	if err != nil {
-// 		logging.Printf("解密base64失败，error: %v", err)
-// 	}
-
-// 	//判断文件格式
-// 	resq.filetype = utils.GetFileExt(&file) //base64如何判断文件类型？？？
-// 	if resq.filetype == "" {
-// 		logging.Printf("文件格式不支持")
-// 		os.Exit(-1)
-// 	}
-
-// 	b.fileName = utils.CreateUUID() + "." + resq.filetype
-// 	resq.upName = b.UploadUrl + b.fileName
-// 	err = upload.NextcloudUploadFile(resq.upName, &file, &b.Auth)
-// 	if err != nil {
-// 		resq.fmtUrl = b.DownloadUrl + b.fileName + "\n"
-// 	}
-// 	return &resq.fmtUrl
-// }
-
-// 本地文件上传
-func (l *DataPreparer) UploadPrepare(conf *config.Platform, args *string) (DataPreparer, *[]byte) {
-	fileByte, err := utils.ReadFile(args)
+// 准备数据
+func (dp *DataPreparer) UploadPrepare(conf *config.Platform, args *string) (DataPreparer, *[]byte) {
+	fileByte, err := os.ReadFile(*args)
 	if err != nil {
 		logging.Logger.Printf("读取文件失败，error：%v", err)
 	}
 
 	//判断文件格式
-	filetype := utils.GetFileExt(fileByte)
+	filetype := assert.GetFileExt(&fileByte)
 	if filetype == "" {
-		logging.Logger.Printf("文件格式不支持")
-		os.Exit(-1)
+		logging.Logger.Panicln("文件格式不支持")
 	}
 
-	fileName := utils.CreateUUID() + "." + filetype
-	l.AccessKeyId = conf.AccessKeyId
-	l.AccessKeySecret = conf.AccessKeySecret
-	l.UseSSL = conf.UseSSL
+	fileName := uuid.NewString() + "." + filetype
+	dp.AccessKeyId = conf.AccessKeyId
+	dp.AccessKeySecret = conf.AccessKeySecret
+	dp.UseSSL = conf.UseSSL
 
 	switch conf.PicBed.Picbed {
 	case "nextcloud":
-		l.PicBed = conf.PicBed.Picbed
-		l.UploadURL = conf.Endpoint + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
-		l.DownloadURL = conf.DownloadUrl + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
+		dp.PicBed = conf.PicBed.Picbed
+		dp.UploadURL = conf.Endpoint + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
+		dp.DownloadURL = conf.DownloadUrl + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
 	case "aliyunOss":
-		l.PicBed = conf.PicBed.Picbed
-		l.UploadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
-		l.DownloadURL = conf.BucketName + "." + conf.Endpoint + "/" + fileName
-		l.BucketName = conf.BucketName
-		l.FileName = fileName
+		dp.PicBed = conf.PicBed.Picbed
+		dp.UploadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
+		dp.DownloadURL = conf.BucketName + "." + conf.Endpoint + "/" + fileName
+		dp.BucketName = conf.BucketName
+		dp.FileName = fileName
 	case "minIO":
-		l.PicBed = conf.PicBed.Picbed
-		l.UploadURL = conf.Endpoint
-		l.DownloadURL = "http://" + conf.Endpoint + "/" + conf.BucketName + "/" + fileName
-		l.BucketName = conf.BucketName
-		l.FileName = fileName
+		dp.PicBed = conf.PicBed.Picbed
+		dp.UploadURL = conf.Endpoint
+		dp.DownloadURL = "http://" + conf.Endpoint + "/" + conf.BucketName + "/" + fileName
+		dp.BucketName = conf.BucketName
+		dp.FileName = fileName
 	default:
 		logging.Logger.Println("不支持的平台")
 	}
 
-	return *l, fileByte
+	return *dp, &fileByte
 }
 
 // 网络文件上传

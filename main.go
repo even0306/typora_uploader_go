@@ -7,7 +7,6 @@ import (
 	"typora_uploader_go/config"
 	"typora_uploader_go/logging"
 	"typora_uploader_go/run"
-	"typora_uploader_go/utils"
 )
 
 func main() {
@@ -35,9 +34,8 @@ func main() {
 		if idx == 0 {
 			continue
 		}
-		fileType := utils.SrcType(&args)
 
-		downloadUrl := run.Run(PlantformConfig, fileType, &args)
+		downloadUrl := run.Run(PlantformConfig, &args)
 
 		if downloadUrl != "" {
 			logging.Logger.Printf("Upload Success:\n")

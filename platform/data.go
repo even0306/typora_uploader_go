@@ -46,6 +46,11 @@ func (dp *DataPreparer) UploadPrepare(conf *config.Platform, args *string) (Data
 		logging.Logger.Panicln("文件格式不支持")
 	}
 
+	scheme := "http"
+	if conf.UseSSL {
+		scheme = "https"
+	}
+
 	fileName := uuid.NewString() + "." + filetype
 	dp.AccessKeyId = conf.AccessKeyId
 	dp.AccessKeySecret = conf.AccessKeySecret
@@ -54,8 +59,8 @@ func (dp *DataPreparer) UploadPrepare(conf *config.Platform, args *string) (Data
 	switch conf.PicBed.Picbed {
 	case "nextcloud":
 		dp.PicBed = conf.PicBed.Picbed
-		dp.UploadURL = conf.Endpoint + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
-		dp.DownloadURL = conf.DownloadUrl + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
+		dp.UploadURL = scheme + "://" + conf.Endpoint + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
+		dp.DownloadURL = scheme + "://" + conf.DownloadUrl + "/" + conf.AccessKeyId + "/" + conf.BucketName + "/" + fileName
 	case "aliyunOss":
 		dp.PicBed = conf.PicBed.Picbed
 		dp.UploadURL = conf.Endpoint + "/" + conf.BucketName + "/" + fileName
@@ -65,7 +70,7 @@ func (dp *DataPreparer) UploadPrepare(conf *config.Platform, args *string) (Data
 	case "minIO":
 		dp.PicBed = conf.PicBed.Picbed
 		dp.UploadURL = conf.Endpoint
-		dp.DownloadURL = "http://" + conf.Endpoint + "/" + conf.BucketName + "/" + fileName
+		dp.DownloadURL = scheme + "://" + conf.Endpoint + "/" + conf.BucketName + "/" + fileName
 		dp.BucketName = conf.BucketName
 		dp.FileName = fileName
 	default:

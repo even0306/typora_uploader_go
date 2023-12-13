@@ -111,11 +111,6 @@ func NextcloudUploadFile(header DataPreparer, fileByte *[]byte) (string, error) 
 
 // 阿里云OSS上传
 func AliyunOssUploadFile(header DataPreparer, fileByte *[]byte) string {
-	scheme := "http"
-	if header.UseSSL {
-		scheme = "https"
-	}
-
 	// func AliyunOssUploadFile(endpoint *string, accessKeyId *string, accessKeySecret *string, bucketName *string, fileName string, fileByte *[]byte) string {
 	client, err := oss.New(header.UploadURL, header.AccessKeyId, header.AccessKeySecret)
 	if err != nil {
@@ -134,7 +129,7 @@ func AliyunOssUploadFile(header DataPreparer, fileByte *[]byte) string {
 		// HandleError(err)
 		logging.Logger.Panicf("阿里云上传失败，error：%v", err)
 	}
-	return scheme + "://" + header.DownloadURL
+	return header.DownloadURL
 }
 
 // minIO OSS上传
